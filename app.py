@@ -10,7 +10,6 @@ from functools import wraps
 from flask import request, jsonify, make_response
 import uuid
 
-# new test
 # fix bug with ModuleNotFoundError: MySQLdb
 
 # Flask object
