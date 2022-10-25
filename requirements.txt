@@ -1,0 +1,6 @@
+connexion==2.13.1
+Flask==2.1.2
+Flask_SQLAlchemy==2.5.1
+PyJWT==2.4.0
+Werkzeug==2.1.2
+connexion[swagger-ui]
