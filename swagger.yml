@@ -1,11 +1,9 @@
 openapi: 3.0.0
-# basePath: /api
 servers:
   - url: https://localhost:5000/
 info:
   title: Server Monitoring API
   version: '1.2'
-# Paths supported by the server application
 paths:
   /users:
     get:
