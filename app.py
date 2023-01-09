@@ -1,4 +1,6 @@
-from config import app
+from config import app, db
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
+    db.metadata.clear()
+    db.initialize_database()

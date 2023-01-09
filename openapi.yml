@@ -1,0 +1,51 @@
+openapi: 3.0.0
+servers:
+  - url: https://localhost:5000/
+info:
+  title: Server Monitoring API
+  version: '1.1'
+paths:
+  /users:
+    get:
+      tags:
+        - User
+      operationId: api.user.get_users
+      summary: Get All users
+      parameters:
+        - in: header
+          name: X-Auth-Token
+          schema:
+            type: string
+            format: token
+          required: true
+      responses:
+        200:
+          description: "All users"
+  /token:
+    post:
+      tags:
+        - User
+      operationId: api.user.post_token
+      summary: Get API authorization token
+      requestBody:
+        description: User credentials
+        required: true
+        content:
+          application/json:
+            schema:
+              x-body-name: credentials
+              type: object
+              properties:
+                email:
+                  example: admin@admin
+                  type: string
+                password:
+                  example: Mmsadmin@181
+                  type: string
+      responses:
+        200:
+          description: "Successfully got token"
+          content:
+            application/text:
+              schema:
+                type: string

@@ -1,0 +1,14 @@
+timeout: 300
+api:
+  openapi: openapi.yml
+  prefix: api
+  swagger: true
+  host: 0.0.0.0
+  port: 5100
+admin:
+  username: admin@admin
+  password: pbkdf2:sha256:260000$yI7sMKJP7rmaMkY8$38b3f8fa0e9d599b6dc5614c0527cf8e9e4cce3bcb32a408c7a92a9ec30e86cb
+token:
+  public_file: cert/jwtRSA256-public.pem
+  private_file: cert/jwtRSA256-private.pem
+  expire_hours: 24
