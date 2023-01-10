@@ -21,6 +21,27 @@ paths:
       responses:
         200:
           description: "All users"
+  /user/{id}:
+    get:
+      tags:
+        - User
+      operationId: api.user.get_user
+      summary: Get single user
+      parameters:
+        - in: header
+          name: X-Auth-Token
+          schema:
+            type: string
+            format: token
+          requred: true
+        - in: header
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        200:
+          description: "Single user"
   /token:
     post:
       tags:

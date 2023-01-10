@@ -26,7 +26,7 @@ class User(Base):
     __tablename__ = 'user'
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False, unique=True)
-    email = Column(String(100), nullable=False, unique=True)
+    username = Column(String(100), nullable=False, unique=True)
     password = Column(String(255), nullable=False)
     description = Column("description", String(255), default='')
     role_id = Column(Integer, ForeignKey('role.id'))
@@ -69,7 +69,7 @@ class Database:
         super_user.id = 1
         super_user.project_id = 1
         super_user.name = 'admin'
-        super_user.email = 'admin@admin'
+        super_user.username = 'admin@admin'
         super_user.password = generate_password_hash('Mmsadmin@181')
         super_user.description = 'System administrator administrative account'
         self.session.add(super_user)
@@ -97,5 +97,5 @@ class Database:
             self.add_roles()
 
 
-db = Database()
-db.initialize_database()
+# db = Database()
+# db.initialize_database()

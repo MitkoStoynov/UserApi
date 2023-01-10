@@ -1,10 +1,15 @@
-import os
-import re
-import sys
-from orm import *
-from connexion import request
 from utils import *
 from werkzeug.security import check_password_hash
+import os
+import sys
+from connexion import request
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(SCRIPT_DIR))
+
+from orm import *
+
+config = json.loads(os.environ['monitor'])
 
 
 def password_check(password):
@@ -47,7 +52,9 @@ def dump_full(p):
         "name": p[0].name,
         "description": p[0].description,
         "project_id": p[0].project_id,
-        "project": p[2]
+        "project": p[2],
+        "role_id": p[0].role_id,
+        "role": p[4]
     }
 
 
@@ -81,6 +88,22 @@ def get_users(page=1, count=20, order='name', direction='asc'):
     q_cnt = q.count()
     q = q.limit(count).offset((page - 1) * count)
     return {'count': q_cnt, 'data': [dump_full(p) for p in q]}
+
+
+def get_user(id):
+    try:
+        cred = decode_manager_token(get_value(config, 'token.public_file'), request.headers['X-Auth-Token'])
+    except Exception as ex:
+        return str(ex), 401
+    db = Database()
+    q = db.session.query(User, Project.id, Project.name, Role.id, Role.role).filter(User.project_id == Project.id)
+    if not get_value(cred, 'is_super_user'):
+        user = db.get_user(cred)
+        q.filter(User.project_id == user.project_id)
+    q = q.outerjoin(Role, User.role_id == Role.id)
+
+    q = q.one_or_none()
+    return dump_full(q) if q is not None else ("This user does not exists or no permission to see it!", 404)
 
 
 def post_token(credentials):
@@ -117,5 +140,21 @@ def post_token(credentials):
         return ex, 401
 
 
-if __name__ == "__main__":
-    get_users()
+# def token_info():
+#     try:
+#         cred = decode_manager_token(get_value(config, 'token.public_file'), request.headers['X-Auth-Token'])
+#     except Exception as ex:
+#         return str(ex), 401
+#     cred['nbf'] = datetime.fromtimestamp(cred['nbf']).strftime("%d-%m-%Y %H:%M:%S")
+#     cred['exp'] = datetime.fromtimestamp(cred['exp']).strftime("%d-%m-%Y %H:%M:%S")
+#     db = Database()
+#     cred['role_id'] = cred['role']
+#     cred['role'] = user_group[cred['role']]
+#     cred['is_readonly'] = False
+#     if not cred['is_super_user']:
+#         user = db.get_user(cred)
+#         cred = merge_dict(get_user(user.id), cred, True)
+#     else:
+#         cred['project_id'] = 1
+#         cred['project'] = get_value(config, 'default_project', 'telco.com')
+#     return cred, 200
