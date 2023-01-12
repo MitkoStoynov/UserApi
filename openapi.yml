@@ -5,48 +5,116 @@ info:
   title: Server Monitoring API
   version: '1.1'
 paths:
-  /users:
+  /user:
     get:
       tags:
         - User
-      operationId: api.user.get_users
-      summary: Get All users
+      operationId: manager.api.user.get_users
+      summary: Get all users
       parameters:
-        - in: header
-          name: X-Auth-Token
-          schema:
-            type: string
-            format: token
-          required: true
-      responses:
-        200:
-          description: "All users"
-  /user/{id}:
-    get:
-      tags:
-        - User
-      operationId: api.user.get_user
-      summary: Get single user
-      parameters:
-        - in: header
-          name: X-Auth-Token
-          schema:
-            type: string
-            format: token
-          requred: true
-        - in: header
-          name: id
+        - $ref: '#/components/parameters/token'
+        - name: page
+          in: query
           schema:
             type: integer
-          required: true
+            minimum: 1
+            default: 1
+        - name: count
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 20
+        - name: order
+          in: query
+          schema:
+            type: string
+            pattern: '^[a-zA-Z0-9_]*$'
+        - name: direction
+          in: query
+          schema:
+            type: string
+            pattern: '^(asc|desc)$'
       responses:
-        200:
-          description: "Single user"
-  /token:
+        '200':
+          description: Return users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+    put:
+      tags:
+        - User
+      operationId: manager.api.user.put_user
+      summary: Create user
+      parameters:
+        - $ref: '#/components/parameters/token'
+      responses:
+        '201':
+          description: User created
+      requestBody:
+        content:
+          application/json:
+            schema:
+              x-body-name: user
+              $ref: '#/components/schemas/User'
+  '/user/{id}':
+    get:
+      tags:
+        - User
+      parameters:
+        - $ref: '#/components/parameters/token'
+        - $ref: '#/components/parameters/id'
+      operationId: manager.api.user.get_user
+      summary: Get a single user
+      responses:
+        '200':
+          description: Return user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User does not exist
     post:
       tags:
         - User
-      operationId: api.user.post_token
+      operationId: manager.api.user.post_user
+      parameters:
+        - $ref: '#/components/parameters/token'
+        - $ref: '#/components/parameters/id'
+      summary: Update user
+      responses:
+        '200':
+          description: User updated
+        '404':
+          description: User does not exist
+      requestBody:
+        content:
+          application/json:
+            schema:
+              x-body-name: user
+              $ref: '#/components/schemas/User'
+    delete:
+      tags:
+        - User
+      operationId: manager.api.user.delete_user
+      summary: Remove user
+      parameters:
+        - $ref: '#/components/parameters/token'
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: User was deleted
+        '404':
+          description: User does not exist
+  '/user/token':
+    post:
+      tags:
+        - User
+      operationId: manager.api.user.post_token
       summary: Get API authorization token
       requestBody:
         description: User credentials
@@ -57,16 +125,35 @@ paths:
               x-body-name: credentials
               type: object
               properties:
-                email:
+                username:
                   example: admin@admin
                   type: string
                 password:
-                  example: Mmsadmin@181
                   type: string
+                  example: Nfvadmin@21
       responses:
-        200:
-          description: "Successfully got token"
+        '200':
+          description: Token generated
           content:
             application/text:
               schema:
                 type: string
+        '401':
+          description: Unauthorized
+  /user/token/info:
+    get:
+      tags:
+        - User
+      operationId: manager.api.user.token_info
+      summary: Get token info
+      parameters:
+        - $ref: '#/components/parameters/token'
+      responses:
+        '200':
+          description: Token info
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized
