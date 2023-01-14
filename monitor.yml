@@ -1,4 +1,5 @@
 timeout: 300
+default_project: uktc.bg
 api:
   openapi: openapi.yml
   prefix: api

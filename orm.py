@@ -1,7 +1,11 @@
+import json
+
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, ForeignKey, UniqueConstraint, MetaData, asc, desc, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
+
+from utils import get_value
 
 DATABASE_URI = 'mysql+mysqlconnector://root:bjhv@localhost:3306'
 
@@ -33,6 +37,12 @@ class User(Base):
     project_id = Column(Integer, ForeignKey('project.id'))
     __table_args__ = (UniqueConstraint('project_id', 'name', name='_user_uc'),)
 
+    def set_password(self, password):
+        self.password = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
+
 
 class Database:
     def __init__(self, DATABASE_URI=DATABASE_URI):
@@ -53,7 +63,7 @@ class Database:
                                                User.project_id == project.id).one_or_none()
         if not user:
             raise Exception("User '{}' not found in database.".format(cred['username']))
-        return
+        return user
 
     def add_roles(self):
         roles = [
@@ -97,5 +107,25 @@ class Database:
             self.add_roles()
 
 
-# db = Database()
-# db.initialize_database()
+def update_attributes(obj, data):
+    for column in obj.__table__.columns:
+        if column.key == 'id':
+            continue
+        if column.key not in data:
+            continue
+        if column.type.python_type is str:
+            val = get_value(data, column.key, '')
+            if column.type.length and len(val) > column.type.length:
+                raise Exception('Field "{}" has maximum length of {} symbols. Now it is {} symbols.'.format(column.key, column.type.length, len(val)))
+        if column.type.python_type is int:
+            val = get_value(data, column.key, '')
+            if not isinstance(val ,int):
+                raise Exception('Field "{}" is not integer. Now it is "{}".'.format(column.key, val))
+    for key, val in data.items():
+        if key == 'id':
+            continue
+        if hasattr(obj, key):
+            v = get_value(data, key, getattr(obj, key))
+            if isinstance(v, dict):
+                v = json.dumps(v)
+            setattr(obj, key, v)

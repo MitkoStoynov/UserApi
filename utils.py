@@ -14,7 +14,6 @@ from datetime import datetime, timedelta, timezone
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 import warnings
-from orm import User, Project, Database
 warnings.filterwarnings("ignore")
 
 
@@ -37,6 +36,7 @@ def print_json(data, return_data=False):
         if return_data:
             return data
         print(data)
+
 
 def get_value(json_config, key, default=None):
     """
@@ -133,5 +133,79 @@ def decode_manager_token(public_key_file, token):
         decoded['project'] = user[user.rfind('@') + 1:]
         return decoded
     except Exception as ex:
-        logger.error(ex)
         raise Exception('Invalid token!')
+
+
+def get_indexed_list(data_list, key):
+    """
+    Get the list of dictionaries as dictionary indexed by it's key name.
+    """
+    data_dict = {}
+    for val in data_list:
+        if key in val:
+            data_dict[val[key]] = val
+    return data_dict
+
+
+def merge_dict(src, dst, overwrite=False):
+    """
+    Merges two dictionaries
+    :param src:
+    :param dst:
+    :param overwrite: If to overwrite the values in dst if exists
+    :return: Merged dictionary
+    """
+    if dst is None or not isinstance(dst, dict):
+        return src
+    tmp = copy.deepcopy(dst)
+    for key, value in dict(src).items():
+        if isinstance(value, dict):
+            if key not in tmp:
+                tmp[key] = dict()
+            tmp[key] = merge_dict(value, tmp[key], overwrite)
+        elif isinstance(value, list):
+            if key not in tmp:
+                    tmp[key] = value
+            elif isinstance(tmp[key], list):
+                if len(tmp[key]):
+                    # Merge lists by key index!
+                    index = None
+                    if isinstance(tmp[key][0], dict) and len(tmp[key][0]) == 1:
+                        #take the key as index
+                        index = list(tmp[key][0])[0]
+                    elif 'id' in tmp[key][0]:
+                        index = 'id'
+                    elif 'name' in tmp[key][0]:
+                        index = 'name'
+                    elif 'type' in tmp[key][0]:
+                        index = 'type'
+                    if not index:
+                        raise Exception("No index detected for key {}!".format(key))
+                    indexed_src = get_indexed_list(value, index)
+                    indexed_dst = get_indexed_list(tmp[key], index)
+                    for i_k, i_v in indexed_src.items():
+                        if get_value(indexed_dst, i_k):
+                            indexed_dst[i_k] = merge_dict(i_v, indexed_dst[i_k], overwrite)
+                        else:
+                            indexed_dst[i_k] = i_v
+                    tmp[key] = []
+                    for i_k, i_v in indexed_dst.items():
+                        tmp[key].append(i_v)
+                else:
+                    tmp[key] = value
+            else:
+                raise Exception("Can't merge {} with {}".format(tmp[key], value))
+        elif isinstance(value, tuple):
+            if overwrite:
+                tmp[key] = value
+            else:
+                if key not in tmp:
+                    tmp[key] = value
+                elif isinstance(tmp[key], tuple):
+                    tmp[key] = value
+                else:
+                    raise Exception("Can't merge {} with {}".format(tmp[key], value))
+        else:
+            if key not in tmp or overwrite:
+                tmp[key] = value
+    return tmp

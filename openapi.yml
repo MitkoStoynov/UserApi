@@ -5,11 +5,118 @@ info:
   title: Server Monitoring API
   version: '1.1'
 paths:
+  /project:
+    get:
+      tags:
+        - Project
+      operationId: api.project.get_projects
+      summary: Get registered projects
+      parameters:
+        - $ref: '#/components/parameters/token'
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: count
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 20
+        - name: order
+          in: query
+          schema:
+            type: string
+            pattern: '^[a-zA-Z0-9_]*$'
+        - name: direction
+          in: query
+          schema:
+            type: string
+            pattern: '^(asc|desc)$'
+      responses:
+        '205':
+          description: Timeout executing command
+        '200':
+          description: Return projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+    put:
+      tags:
+        - Project
+      operationId: api.project.put_project
+      summary: Create or update project
+      parameters:
+        - $ref: '#/components/parameters/token'
+      responses:
+        '200':
+          description: Project updated
+        '201':
+          description: Project created
+      requestBody:
+        content:
+          application/json:
+            schema:
+              x-body-name: project
+              $ref: '#/components/schemas/Project'
+  '/project/{id}':
+    get:
+      tags:
+        - Project
+      operationId: api.project.get_project
+      summary: Get a project
+      parameters:
+        - $ref: '#/components/parameters/token'
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Return project details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '404':
+          description: Project does not exist
+    post:
+      tags:
+        - Project
+      operationId: api.project.post_project
+      summary: Update project
+      parameters:
+        - $ref: '#/components/parameters/token'
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Project updated
+      requestBody:
+        content:
+          application/json:
+            schema:
+              x-body-name: project
+              $ref: '#/components/schemas/Project'
+    delete:
+      tags:
+        - Project
+      operationId: api.project.delete_project
+      summary: Remove a project
+      parameters:
+        - $ref: '#/components/parameters/token'
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Project was deleted
+        '404':
+          description: Project does not exist
   /user:
     get:
       tags:
         - User
-      operationId: manager.api.user.get_users
+      operationId: api.user.get_users
       summary: Get all users
       parameters:
         - $ref: '#/components/parameters/token'
@@ -41,13 +148,12 @@ paths:
           content:
             application/json:
               schema:
-                type: array
                 items:
                   $ref: '#/components/schemas/User'
     put:
       tags:
         - User
-      operationId: manager.api.user.put_user
+      operationId: api.user.put_user
       summary: Create user
       parameters:
         - $ref: '#/components/parameters/token'
@@ -67,7 +173,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/token'
         - $ref: '#/components/parameters/id'
-      operationId: manager.api.user.get_user
+      operationId: api.user.get_user
       summary: Get a single user
       responses:
         '200':
@@ -78,43 +184,43 @@ paths:
                 $ref: '#/components/schemas/User'
         '404':
           description: User does not exist
-    post:
-      tags:
-        - User
-      operationId: manager.api.user.post_user
-      parameters:
-        - $ref: '#/components/parameters/token'
-        - $ref: '#/components/parameters/id'
-      summary: Update user
-      responses:
-        '200':
-          description: User updated
-        '404':
-          description: User does not exist
-      requestBody:
-        content:
-          application/json:
-            schema:
-              x-body-name: user
-              $ref: '#/components/schemas/User'
-    delete:
-      tags:
-        - User
-      operationId: manager.api.user.delete_user
-      summary: Remove user
-      parameters:
-        - $ref: '#/components/parameters/token'
-        - $ref: '#/components/parameters/id'
-      responses:
-        '200':
-          description: User was deleted
-        '404':
-          description: User does not exist
+#    post:
+#      tags:
+#        - User
+#      operationId: api.user.post_user
+#      parameters:
+#        - $ref: '#/components/parameters/token'
+#        - $ref: '#/components/parameters/id'
+#      summary: Update user
+#      responses:
+#        '200':
+#          description: User updated
+#        '404':
+#          description: User does not exist
+#      requestBody:
+#        content:
+#          application/json:
+#            schema:
+#              x-body-name: user
+#              $ref: '#/components/schemas/User'
+#    delete:
+#      tags:
+#        - User
+#      operationId: api.user.delete_user
+#      summary: Remove user
+#      parameters:
+#        - $ref: '#/components/parameters/token'
+#        - $ref: '#/components/parameters/id'
+#      responses:
+#        '200':
+#          description: User was deleted
+#        '404':
+#          description: User does not exist
   '/user/token':
     post:
       tags:
         - User
-      operationId: manager.api.user.post_token
+      operationId: api.user.post_token
       summary: Get API authorization token
       requestBody:
         description: User credentials
@@ -130,7 +236,7 @@ paths:
                   type: string
                 password:
                   type: string
-                  example: Nfvadmin@21
+                  example: Mmsadmin@181
       responses:
         '200':
           description: Token generated
@@ -144,7 +250,7 @@ paths:
     get:
       tags:
         - User
-      operationId: manager.api.user.token_info
+      operationId: api.user.token_info
       summary: Get token info
       parameters:
         - $ref: '#/components/parameters/token'
@@ -157,3 +263,84 @@ paths:
                 type: object
         '401':
           description: Unauthorized
+components:
+  parameters:
+    uid:
+      name: uid
+      description: Unique identifier
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: '^[a-zA-Z0-9-]+$'
+    hostname:
+      name: hostname
+      description: Hostname
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: '^[a-zA-Z0-9-]+$'
+    id:
+      name: id
+      description: Identifier
+      in: path
+      required: true
+      schema:
+        type: integer
+    token:
+      name: X-Auth-Token
+      description: Manager token required for accessing resources
+      in: header
+      required: true
+      schema:
+        type: string
+  schemas:
+    Project:
+      type: object
+      x-foreign-key-column: id
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+          description: Unique identifier
+        name:
+          type: string
+          description: Name
+          example: uktc.bg
+          minLength: 1
+          maxLength: 50
+        description:
+          type: string
+          description: Project description
+          example: 'Default project'
+    User:
+      type: object
+      required:
+        - project_id
+        - role_id
+        - name
+        - username
+      properties:
+        project_id:
+          type: integer
+          description: Project id
+        role_id:
+          type: integer
+          description: User role id
+          minimum: 1
+          maximum: 3
+          example: 1
+        name:
+          type: string
+          description: Full name of the user
+        description:
+          type: string
+          description: Contact information
+        username:
+          type: string
+          description: username
+        password:
+          type: string
+          description: password
