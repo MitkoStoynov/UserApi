@@ -29,13 +29,13 @@ class Project(Base):
 class User(Base):
     __tablename__ = 'user'
     id = Column(Integer, primary_key=True)
-    name = Column(String(100), nullable=False, unique=True)
-    username = Column(String(100), nullable=False, unique=True)
+    name = Column(String(100), nullable=False)
+    username = Column(String(100), nullable=False)
     password = Column(String(255), nullable=False)
     description = Column("description", String(255), default='')
     role_id = Column(Integer, ForeignKey('role.id'))
     project_id = Column(Integer, ForeignKey('project.id'))
-    __table_args__ = (UniqueConstraint('project_id', 'name', name='_user_uc'),)
+    # __table_args__ = (UniqueConstraint('project_id', 'name', name='_user_uc'),)
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
@@ -64,6 +64,34 @@ class Database:
         if not user:
             raise Exception("User '{}' not found in database.".format(cred['username']))
         return user
+
+    def get_dependencies_list(self, table_name, id, exclude_list=[]):
+        use_list = []
+        db_name = "diploma"
+        table_list = self.session.execute(
+            'SELECT ' +
+            'TABLE_NAME,COLUMN_NAME,CONSTRAINT_NAME, REFERENCED_TABLE_NAME,' +
+            'REFERENCED_COLUMN_NAME ' +
+            'FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE ' +
+            'WHERE REFERENCED_TABLE_SCHEMA = "{}" AND '.format(db_name) +
+            'REFERENCED_TABLE_NAME = "{}"'.format(table_name)
+        )
+        for table in table_list:
+            val = {'table': table[0], 'field': table[1]}
+            for row in self.session.execute('SELECT COUNT(*) FROM {} WHERE {}={}'.format(table[0], table[1], id)):
+                if row[0] > 0 and table[0] not in exclude_list:
+                    val['count'] = row[0]
+                    use_list.append(val)
+        return use_list
+
+    def delete_data_flow(self, table_name, id, exclude_list=[]):
+        for val in self.get_dependencies_list(table_name, id, exclude_list):
+            data = self.session.execute("SELECT ID FROM {} WHERE {}={}".format(val['table'], val['field'], id))
+            for row in data:
+                self.delete_data_flow(val['table'], row[0], exclude_list=exclude_list)
+
+        self.session.execute("DELETE FROM {} WHERE ID={}".format(table_name, id))
+        self.session.commit()
 
     def add_roles(self):
         roles = [

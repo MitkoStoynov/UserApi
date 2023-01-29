@@ -184,38 +184,38 @@ paths:
                 $ref: '#/components/schemas/User'
         '404':
           description: User does not exist
-#    post:
-#      tags:
-#        - User
-#      operationId: api.user.post_user
-#      parameters:
-#        - $ref: '#/components/parameters/token'
-#        - $ref: '#/components/parameters/id'
-#      summary: Update user
-#      responses:
-#        '200':
-#          description: User updated
-#        '404':
-#          description: User does not exist
-#      requestBody:
-#        content:
-#          application/json:
-#            schema:
-#              x-body-name: user
-#              $ref: '#/components/schemas/User'
-#    delete:
-#      tags:
-#        - User
-#      operationId: api.user.delete_user
-#      summary: Remove user
-#      parameters:
-#        - $ref: '#/components/parameters/token'
-#        - $ref: '#/components/parameters/id'
-#      responses:
-#        '200':
-#          description: User was deleted
-#        '404':
-#          description: User does not exist
+    post:
+      tags:
+        - User
+      operationId: api.user.post_user
+      parameters:
+        - $ref: '#/components/parameters/token'
+        - $ref: '#/components/parameters/id'
+      summary: Update user
+      responses:
+        '200':
+          description: User updated
+        '404':
+          description: User does not exist
+      requestBody:
+        content:
+          application/json:
+            schema:
+              x-body-name: user
+              $ref: '#/components/schemas/User'
+    delete:
+      tags:
+        - User
+      operationId: api.user.delete_user
+      summary: Remove user
+      parameters:
+        - $ref: '#/components/parameters/token'
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: User was deleted
+        '404':
+          description: User does not exist
   '/user/token':
     post:
       tags:

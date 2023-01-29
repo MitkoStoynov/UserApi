@@ -151,86 +151,52 @@ def put_user(user):
     return p.id, 201
 
 
-# def post_user(id, user):
-#     try:
-#         cred = decode_manager_token(get_value(config, 'token.public_file'), request.headers['X-Auth-Token'])
-#     except Exception as ex:
-#         return str(ex), 401
-#     db = ManagerDB(get_value(config, 'database_engine'), logger.level == logging.DEBUG)
-#     current_user = None
-#     if not get_value(cred, 'is_super_user'):
-#         current_user = db.get_user(cred)
-#         if current_user.is_readonly:
-#             return "Current user is with read only permissions", 403
-#         if current_user.group_id > 1:
-#             return "Managing users is not allowed!", 403
-#         user['project_id'] = current_user.project_id
-#     p_ref = db.session.query(User).filter(User.username == user['username'], User.id != id, User.project_id == user['project_id']).one_or_none()
-#     if p_ref is not None:
-#         return "User with username '{}' already exists!".format(user['username']), 403
-#     p = db.session.query(User).filter(User.id == id).one_or_none()
-#     if p is None:
-#         return "This user does not exists!", 404
-#     if get_value(user, 'group_id', -1) not in range(0, 3):
-#         return "Wrong group_id! It must be in range [0-2]", 403
-#     if current_user and current_user.group_id > user['group_id']:
-#         return "Setting group with bigger rights than the current user is not allowed.", 403
-#     if user['group_id'] >= 1:
-#         if not get_value(user, 'operator_id'):
-#             return "Please, specify operator for the user.", 403
-#         if current_user and current_user.group_id >= 1 and user['operator_id'] != current_user.operator_id:
-#             return "Setting another operator is not allowed.", 403
-#     if user['group_id'] >= 2:
-#         if not get_value(user, 'customer_id'):
-#             return "Please specify customer for the user.", 403
-#         if current_user and current_user.group_id >= 1:
-#             ref = db.session.query(Customer).filter(Customer.operator_id == current_user.operator_id, Customer.id == user['customer_id']).one_or_none()
-#             if not ref:
-#                 return "Setting customer from different or missing operator is not allowed.", 403
-#
-#     if 'password' in user and user['password']:
-#         pass_result = password_check(user['password'])
-#         if not pass_result['password_ok']:
-#             return "Password must contain at least one uppercase letter, one lowercase letter, one digit, one special character and must have a minimum length of eight characters.", 406
-#
-#     # Check operator_id and customer_id
-#     if user['group_id'] >= 1 and get_value(user, 'operator_id'):
-#         operator = db.session.query(Operator).filter(
-#             Operator.project_id == user['project_id'],
-#             Operator.id == get_value(user, 'operator_id')
-#         ).one_or_none()
-#         if not operator:
-#             return "Operator {} does not exists in database!".format(get_value(user, 'operator_id')), 403
-#         if user['group_id'] >= 2 and get_value(user, 'customer_id'):
-#             customer = db.session.query(Customer).filter(
-#                 Customer.project_id == user['project_id'],
-#                 Customer.operator_id == get_value(user, 'operator_id'),
-#                 Customer.id == get_value(user, 'customer_id')
-#             ).one_or_none()
-#             if not customer:
-#                 return "Customer {} does not exists in database or is not in same operator!".format(get_value(user, 'customer_id')), 403
-#         else:
-#             user['customer_id'] = 0
-#     else:
-#         user['operator_id'] = 0
-#     logger.info('Update user: {}'.format(user))
-#     if 'password' in user and user['password']:
-#         p.set_password(user['password'])
-#         del(user['password'])
-#     else:
-#         user['password'] = p.password
-#     update_attributes(p, user)
-#     db.session.commit()
-#     send_action(config,
-#                 cred,
-#                 project_id=p.project_id,
-#                 key="user:update",
-#                 value=id,
-#                 description="User {} was updated".format(get_value(user, "username")))
-#     send_notify(config, user['project_id'], 'user')
-#     return "User {} was updated".format(user['name']), 200
-#
-#
+def post_user(id, user):
+    try:
+        cred = decode_manager_token(get_value(config, 'token.public_file'), request.headers['X-Auth-Token'])
+    except Exception as ex:
+        return str(ex), 401
+    db = Database()
+    current_user = None
+    if not get_value(cred, 'is_super_user'):
+        current_user = db.get_user(cred)
+        if current_user.is_readonly:
+            return "Current user is with read only permissions", 403
+        if current_user.role_id > 1:
+            return "Managing users is not allowed!", 403
+        user['project_id'] = current_user.project_id
+    p_ref = db.session.query(User).filter(User.username == user['username'], User.id != id, User.project_id == user['project_id']).one_or_none()
+    if p_ref is not None:
+        return "User with username '{}' already exists!".format(user['username']), 403
+    p = db.session.query(User).filter(User.id == id).one_or_none()
+    if p is None:
+        return "This user does not exists!", 404
+    if get_value(user, 'role_id', -1) not in range(1, 4):
+        return "Wrong role_id! It must be in range [1-3]", 403
+    if current_user and current_user.role_id > user['role_id']:
+        return "Setting role with bigger rights than the current user is not allowed.", 403
+    ##
+    if 'password' in user and user['password']:
+        pass_result = password_check(user['password'])
+        if not pass_result['password_ok']:
+            return "Password must contain at least one uppercase letter, one lowercase letter, one digit, one special character and must have a minimum length of eight characters.", 406
+
+    if 'password' in user and user['password']:
+        p.set_password(user['password'])
+        del(user['password'])
+    else:
+        user['password'] = p.password
+    update_attributes(p, user)
+    db.session.commit()
+    # send_action(config,
+    #             cred,
+    #             project_id=p.project_id,
+    #             key="user:update",
+    #             value=id,
+    #             description="User {} was updated".format(get_value(user, "username")))
+    return "User {} was updated".format(user['name']), 200
+
+
 def delete_user(id):
     try:
         cred = decode_manager_token(get_value(config, 'token.public_file'), request.headers['X-Auth-Token'])
